@@ -2,13 +2,43 @@
 
 // Dependancies
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config');
+var fs = require('fs');
 
-// The server should respond to all requests with a string
-var server = http.createServer(function(req, res){
+// Instantiate the HTTP server
+var httpServer = http.createServer(function(req, res){
+	unifiedServer(req, res);
+});
 
+// Start http server
+httpServer.listen(config.httpport, function(){
+	console.log("The server is listening port " + config.httpport
+		+ ' in ' + config.envName + " mode\n");
+});
+
+// Instantiate the HTTPS server
+var httpsServerOptions = {
+	'key' : fs.readFileSync('./https/key.pem'), 
+	'cert' : fs.readFileSync('./https/cert.pem')
+};
+
+var httpsServer = https.createServer(httpsServerOptions, function(req, res){
+	unifiedServer(req, res);
+});
+
+// Start https server
+httpsServer.listen(config.httpsport, function(){
+	console.log("The server is listening port " + config.httpsport
+		+ ' in ' + config.envName + " mode\n");
+});
+
+
+// All the server logic for both the http and https server
+var unifiedServer = function(req, res){
+	
 	// Get the URL and parse it
 	var parsedUrl = url.parse(req.url, true);
 
@@ -81,13 +111,7 @@ var server = http.createServer(function(req, res){
 				'\n');
 		});
 	});
-});
-
-// Start the server and have it listen on port exported by config.js 
-server.listen(config.port, function(){
-	console.log("The server is listening port " + config.port
-		+ ' in ' + config.envName + " mode\n");
-});
+};
 
 // Define the handlers
 var handlers = {};
@@ -97,6 +121,9 @@ handlers.sample = function(data, callback){
 	// Callback a http status code and a payload object
 	callback(406, {name: 'sample handler'});	
 };
+handlers.ping = function(data, callback){
+	callback(200);
+};
 
 //Not found handler
 handlers.notFound = function(data, callback){
@@ -105,5 +132,6 @@ handlers.notFound = function(data, callback){
 
 // Define a request router
 var router = {
-	'sample' : handlers.sample
+	'sample' : handlers.sample,
+	'ping' : handlers.ping
 };
