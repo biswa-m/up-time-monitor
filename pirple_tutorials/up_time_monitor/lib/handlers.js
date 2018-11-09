@@ -225,11 +225,172 @@ handlers._users.delete = function(data, callback){
 
 };
 
-
-handlers.sample = function(data, callback){
-        // Callback a http status code and a payload object
-        callback(406, {name: 'sample handler'});
+// Tokens 
+handlers.tokens = function(data, callback){
+	var acceptableMethods = ['post', 'get', 'put', 'delete'];
+	if(acceptableMethods.indexOf(data.method) > -1) {
+		handlers._tokens[data.method](data, callback);
+	} else {
+		callback(405);
+	}
 };
+
+// Tokens submethod
+handlers._tokens = {};
+
+// Tokens post
+/* Require data: phone, password
+ * Optional data: none
+ */ 
+handlers._tokens.post = function(data, callback){
+	// Check for the required field
+	var phone
+		= typeof(data.payload.phone) == 'string'
+		&& data.payload.phone.trim().length == 10
+		? data.payload.phone.trim()
+		: false;
+	var password = 
+		typeof(data.payload.password) == 'string'
+		&& data.payload.password.trim().length > 0
+		? data.payload.password.trim()
+		: false;
+	if (phone && password) {
+		// Look for the user who matches the phone number
+		_data.read('users', phone, function(err, userData){
+			if (!err && userData) {
+				// Hash the sent passoword and compare
+				var hashedPassword = helpers.hash(password);
+				if (hashedPassword == userData.hashedPassword) {
+					// Create a new token with an expiration time 1 hour
+					var tokenId = helpers.createRandomString(20);
+					var expires = Date.now() + 1000 * 60 * 60;
+					var tokenObject = {
+						'phone' : phone,
+						'id' : tokenId,
+						'expires' : expires
+					};
+
+					// Store the token
+					_data.create('tokens', tokenId, tokenObject, function(err){
+						if (!err) {
+							callback(200, tokenObject);
+						} else {
+							callback(500, {'Error' : 'Could not create the new token'});
+						}
+					});
+				} else {
+					callback(400, {'Error' : 'Password did not matched'});
+				}
+			} else {
+				callback(400, {'Error' : 'Could not find the specific user'});
+			}
+		});
+	
+	} else {
+		callback(400, {'Error' : 'Missing required field'});
+	}
+	
+};
+
+// Tokens get
+handlers._tokens.get = function(data, callback){
+	var id
+		= typeof(data.queryStringObject.id) == 'string'
+		&& data.queryStringObject.id.trim().length == 20
+		? data.queryStringObject.id.trim()
+		: false;
+	if (id) {
+		// Lookup the user
+		_data.read('tokens', id, function(err, tokenData){
+			if (!err && data) {
+				callback(200, tokenData);
+			} else {
+				callback(404);	
+			}
+		});
+	} else {
+		callback(400, {'Error' : 'Missing required field'});
+	}
+	
+};
+// Tokens put
+/* Required data : id, extend
+ * Optional data : none
+ */
+handlers._tokens.put = function(data, callback){
+	var id
+		= typeof(data.payload.id) == 'string'
+		&& data.payload.id.trim().length == 20
+		? data.payload.id.trim()
+		: false;
+	var extend
+		= typeof(data.payload.extend) == 'boolean'
+		&& data.payload.extend == true
+		? data.payload.extend
+		: false;
+	if (id && extend) {
+		// Lookup the token
+		_data.read('tokens', id, function(err, tokenData){
+			if (!err && tokenData) {
+				// Check token is currently active
+				if (tokenData.expires > Date.now()) {
+					// set the expiration an hour from now
+					tokenData.expires =  Date.now() + 1000 * 60 * 60;
+					// Store the new updates
+					_data.update('tokens', id, tokenData, function(err) {
+						if (!err) {
+							callback(200);
+						} else {
+							callback(500, {'Error' : 'Could not update the token'});
+						}
+					});
+				} else {
+					callback(400, {'Error' : 'The token is already expired'});
+				}
+			} else {
+				callback(400, {'Error' : 'Specified token does not exist'});
+			}
+		});
+	} else {
+		callback(400, {'Error' : 'Missing required field(s)'});
+	}
+
+};
+
+/* Tokens delete 
+ * Required data: id
+ * Optional data: none
+ */
+handlers._tokens.delete = function(data, callback){
+	// Check the id is valid
+	var id
+		= typeof(data.queryStringObject.id) == 'string'
+		&& data.queryStringObject.id.trim().length == 20
+		? data.queryStringObject.id.trim()
+		: false;
+	if (id) {
+		// Lookup the token
+		_data.read('tokens', id, function(err, data){
+			if (!err && data) {
+				_data.delete('tokens', id, function(err){
+					if (!err) { 
+						callback(200);
+					} else {
+						callback(400, {'Error' : 'Could not delete the specified token'});
+					}
+				});
+			} else {
+				callback(400, {'Error' : 'Could not find the specified token'});	
+			}
+		});
+	} else {
+		callback(400, {'Error' : 'Missing required field'});
+	}
+
+
+};
+
+// Ping requests
 handlers.ping = function(data, callback){
         callback(200);
 };
