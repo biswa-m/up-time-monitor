@@ -230,13 +230,41 @@ handlers._users.delete = function(data, callback){
 		handlers._tokens.verifyToken(token, phone, function(tokenIsValid){
 			if (tokenIsValid) {
 				// Lookup the user
-				_data.read('users', phone, function(err, data){
-					if (!err && data) {
+				_data.read('users', phone, function(err, userData){
+					if (!err && userData) {
 						_data.delete('users', phone, function(err){
 							if (!err) { 
-								callback(200);
+								// Delete each of the checks associated with the user
+								
+								var userChecks = typeof(userData.checks) == "object"
+									&& userData.checks instanceof Array
+									? userData.checks
+									: [];
+								var checksToDelete = userChecks.length;
+								if (checksToDelete > 0) {
+									var checksDeleted = 0;
+									var deletionErrors = false;
+									// Loop through the checks
+									userChecks.forEach(function(checkId){
+										_data.delete('checks', checkId, function(err){
+											if (err) {
+												deletionErrors = true;
+											} 
+											checksDeleted++;
+											if (checksDeleted == checksToDelete) {
+												if (!deletionErrors) {
+													callback(200);
+												} else {
+													callback(500, {'Error' : 'All checks of the user may not have been deleted'});
+												}
+											}
+										});		
+									});
+								} else {
+									callback(200);
+								}
 							} else {
-								callback(400, {'Error' : 'Could not delete the specified user'});
+								callback(500, {'Error' : 'Could not delete the specified user'});
 							}
 						});
 					} else {
