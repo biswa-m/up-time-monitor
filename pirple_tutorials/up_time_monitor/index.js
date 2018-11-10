@@ -68,6 +68,15 @@ var unifiedServer = function(req, res){
 	req.on('end', function(){
 		buffer += decoder.end();
 
+		// Log the request data
+		console.log('Request received on path: '+trimmedPath+
+			'\nwith the method: ', method,
+			'\nwith these query string parameters: ', 
+				queryStringObject,
+			'\nwith these headers: ', headers,
+			'\nwith this payload: ', buffer
+			);
+
 		// Chose the handler this request should go
 		var chosenHandler = 
 			typeof(router[trimmedPath]) !== 'undefined'
@@ -103,13 +112,8 @@ var unifiedServer = function(req, res){
 			res.writeHead(statusCode);
 			res.end(payloadString);
 
-			// Log the request path
-			console.log('Request received on path: '+trimmedPath+
-				'\nwith the method: ', method,
-				'\nwith these query string parameters: ', 
-					queryStringObject,
-				'\nwith these headers: ', headers,
-				'\nwith this payload: ', buffer,
+			// Log the response
+			console.log(
 				'\nreturning this response: ', 
 					statusCode, payloadString,
 				'\n');
@@ -121,5 +125,6 @@ var unifiedServer = function(req, res){
 var router = {
 	'ping' : handlers.ping,
 	'users' : handlers.users,
-	'tokens' : handlers.tokens
+	'tokens' : handlers.tokens,
+	'checks' : handlers.checks
 };
