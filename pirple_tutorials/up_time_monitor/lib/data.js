@@ -16,7 +16,6 @@ lib.baseDir = path.join(__dirname, '/../.data');
 // Write data to a file
 lib.create = function(dir, file, data, callback){
 	// open the file for writing
-	console.log(lib.baseDir+dir+'/'+file+'.json');
 	fs.open(lib.baseDir+'/'+dir+'/'+file+'.json', 'wx', 
 		function(err, fileDescriptor){
 			if (!err && fileDescriptor) {
@@ -103,5 +102,21 @@ lib.delete = function(dir, file, callback){
 		}
 	);
 };
+
+// List all the item in a directory
+lib.list = function(dir, callback) {
+	fs.readdir(lib.baseDir + '/' + dir + '/', function(err, data) {
+		if (!err && data && data.length > 0) {
+			var trimmedFileNames = [];
+			data.forEach(function(fileName){
+				trimmedFileNames.push(fileName.replace('.json', ''));
+			});
+			callback(false, trimmedFileNames);
+		} else {
+			callback(err, data);
+		}
+	})
+}
+
 // Export the module
 module.exports = lib;
