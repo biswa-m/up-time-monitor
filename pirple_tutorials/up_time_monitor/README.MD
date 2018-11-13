@@ -14,23 +14,18 @@ Start the app by following command
 	node index.js
 
 Before starting the app for the first time do the following
-1.	If not already present, create two new directory '.data' and '.logs', on the same directory where 'index.js' is located. '.data' holds all the user data and '.logs' holds all the log files of the application. 
-2.	Make sure the ports 3000, 3001, 5000 and 5001 is currently free. If any of them are not available configure the ports at 'lib/config.js' file.
+	Make sure the ports 3000, 3001, 5000 and 5001 is currently free. If any of them are not available configure the ports at 'lib/config.js' file.
 
 ## Modes
 Run the app in stagging environment
-	
 	NODE_ENV=staging node index.js
 
 Run the app in production environment
-
 	NODE_ENV=production node index.js
 
 Run the app in debugging modes
 1. Debug background workers
-	
 	NODE_DEBUG=workers node index.js
 
 2. Debug servers
-	
 	NODE_DEBUG=server node index.js
