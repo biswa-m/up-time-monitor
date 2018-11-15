@@ -26,13 +26,13 @@ handlers.user = function(data, callback) {
 	} else {
 		callback(405);
 	}	
-}
+};
 
 // Container for users submethods
 handlers._users = {};
 
 /* User - POST 
- * Required data: firstName, lastName, email, password, tosAgreement
+ * Required data: firstName, lastName, email, address, password, tosAgreement
  * Otional data: None
  */
 handlers._users.post = function(data, callback){
@@ -58,6 +58,12 @@ handlers._users.post = function(data, callback){
 		? data.payload.email
 		: false;
 	
+	var address 
+		= typeof(data.payload.address) == 'string'
+		&& data.payload.address.length > 0
+		? data.payload.address
+		: false;
+
 	var password 
 		= typeof(data.payload.password) == 'string'
 		&& data.payload.password.length > 0
@@ -69,7 +75,7 @@ handlers._users.post = function(data, callback){
 		? data.payload.tosAgreement
 		: false;
 
-	if (firstName && lastName && email && password && tosAgreement){
+	if (firstName && lastName && email && address && password && tosAgreement){
 		// Make sure that the user doesnot already exist
 		_data.read('users', email, function(err, data){
 			if (err){
@@ -82,6 +88,7 @@ handlers._users.post = function(data, callback){
 						'firstName' : firstName,
 						'lastName' : lastName,
 						'email' : email,
+						'address' : address,
 						'hashedPassword' : hashedPassword,
 						'tosAgreement' : tosAgreement
 					};
@@ -107,7 +114,7 @@ handlers._users.post = function(data, callback){
 };
 
 /* User - GET
- * Required data: email
+ * Required data: email, tokenId 
  * Optional data: none
  */
 
@@ -122,14 +129,28 @@ handlers._users.get = function(data, callback){
 		: false;
 
 	if (email) {
-		// Lookup the user
-		_data.read('users', email, function(err, userData){
-			if (!err && userData) {
-				// Hashed password should not be shown
-				delete userData.hashedPassword;
-				callback(200, userData);
+		var tokenId = 
+			typeof(data.headers.token) == 'string'
+			&& data.headers.token.length == 20
+			? data.headers.token
+			: false;
+
+		// Verify tokenId is belongs to the user and is not expired
+		handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// Lookup the user
+				_data.read('users', email, function(err, userData){
+					if (!err && userData) {
+						// Hashed password should not be shown
+						delete userData.hashedPassword;
+						callback(200, userData);
+					} else {
+						callback(404);
+					}
+				});
+
 			} else {
-				callback(404);
+				callback(403, msg);	
 			}
 		});
 	} else {
@@ -164,6 +185,12 @@ handlers._users.put = function(data, callback){
 		? data.payload.lastName
 		: false;
 
+	var address 
+		= typeof(data.payload.address) == 'string'
+		&& data.payload.address.length > 0
+		? data.payload.address
+		: false;
+
 	var password 
 		= typeof(data.payload.password) == 'string'
 		&& data.payload.password.length > 0
@@ -171,33 +198,51 @@ handlers._users.put = function(data, callback){
 		: false;
 
 	if (email){
-		if (firstName || lastName || password) {
-			// Look up the user
-			_data.read('users', email, function(err, userData){
-				if (!err && userData) {
-					// update the userData object	
-					if (firstName) {
-						userData.firstName = firstName;
-					}
-					if (lastName) {
-						userData.lastName = lastName;
-					}
-					if (password) {
-						userData.hashedPassword = helpers.hash(password);
-					}
+		if (firstName || lastName || address || password) {
+			// Validate token id
+			var tokenId = 
+				typeof(data.headers.token) == 'string'
+				&& data.headers.token.length == 20
+				? data.headers.token
+				: false;
+			console.log(tokenId);
 
-					// Store the new update
-					_data.update('users', email, userData, function(err){
-						if (!err) {
-							callback(200);
+			// Verify tokenId is belongs to the user and is not expired
+			handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+				if (tokenIsValid) {
+					// Look up the user
+					_data.read('users', email, function(err, userData){
+						if (!err && userData) {
+							// update the userData object	
+							if (firstName) {
+								userData.firstName = firstName;
+							}
+							if (lastName) {
+								userData.lastName = lastName;
+							}
+							if (address) {
+								userData.address = address;
+							}
+							if (password) {
+								userData.hashedPassword = helpers.hash(password);
+							}
+
+							// Store the new update
+							_data.update('users', email, userData, function(err){
+								if (!err) {
+									callback(200);
+								} else {
+									callback(500, {'Error' : 'Could not update the user'});	
+								}
+							});
 						} else {
-							callback(500, {'Error' : 'Could not update the user'});	
+							callback(400, {'Error' : 'The specified user does not exist'});
 						}
-					});
+					});	
 				} else {
-					callback(400, {'Error' : 'The specified user does not exist'});
+					callback(400, msg);
 				}
-			});	
+			});
 		} else {
 			callback(403, {'Error' : 'Missing fields to update'});
 		}
@@ -208,8 +253,7 @@ handlers._users.put = function(data, callback){
 
 // User - DELETE
 handlers._users.delete = function(data, callback){
-	// @TODO implement file write
-	// delete user file and all the associate data
+	// @TODO delete user file and all the associate data
 	callback(200, {'Success' : 'Hi from handlers function'});
 };
 
@@ -221,7 +265,7 @@ handlers.token = function(data, callback) {
 	} else {
 		callback(405);
 	}	
-}
+};
 
 // Token submethod
 handlers._tokens = {};
@@ -389,6 +433,79 @@ handlers._tokens.delete = function(data, callback){
 		console.log(data.payload.tokenId);
 	}
 };
+
+// Verify if a given token id is currently valid for a given user
+handlers._tokens.verifyToken = function(tokenId, email, callback) {
+	_data.read('tokens', tokenId, function(err,tokenData){
+		if (!err && tokenData) {
+			// match the user and check token expiration
+			if (tokenData.email == email && tokenData.expire > Date.now()) {
+				callback(true);
+			} else {
+				callback(false, {'Error' : 'Mismatch token or token expired'});
+			}
+		} else {
+			callback(false, {'Error' : 'Token does not exist'});
+		}	
+	});
+}
+
+
+// Menu Item 
+handlers.menu = function(data, callback) {
+	if (['get'].indexOf(data.method) > -1) {
+		handlers._menu[data.method](data, callback);
+	} else {
+		callback(405);
+	}	
+};
+
+
+// Container for shopping cart submethods
+handlers._menu = {};
+
+/*
+ * Menu - get
+ * required data: token, email 
+ * optional data: none
+ */
+handlers._menu.get = function(data, callback){
+	// Validate required data
+	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
+	var email 
+		= typeof(data.headers.email) == 'string'
+		&& data.headers.email.length > 0
+		&& emailRegEx.test(data.headers.email)
+		? data.headers.email
+		: false;
+
+	if (email) {
+		var tokenId = 
+			typeof(data.headers.token) == 'string'
+			&& data.headers.token.length == 20
+			? data.headers.token
+			: false;
+
+		// verify token
+		handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// Read menuData object
+				_data.read('menus', 'menu', function(err, menuData){
+					if (!err && menuData) {
+						callback(200, menuData); 
+					} else {
+						callback(500, {'Error' : 'Could not read menu from file'});
+					}
+				});
+			} else {
+				callback(400, msg);
+			}
+		});
+	} else {
+		callback(403, {'Error' : 'Missing required field'});
+	}
+};
+
 
 // Exports model
 module.exports = handlers;

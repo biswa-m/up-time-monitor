@@ -36,6 +36,9 @@ server.unifiedServer = function(req, res) {
 	// parse url
 	parsedUrl = url.parse(req.url, true); 
 
+	// Get the header as an object
+	var headers = req.headers;
+
 	// Get the path
 	var path = parsedUrl.pathname;
 	var trimmedPath = path.replace(/^\/+|\/+$/g,'');
@@ -45,9 +48,6 @@ server.unifiedServer = function(req, res) {
 
 	// Get the HTTP Method
 	var method = req.method.toLowerCase();
-
-	// Get the header as an object
-	var headers = req.headers;
 
 	// Get the payload, if any
 	var decoder = new StringDecoder('utf-8');
@@ -78,7 +78,7 @@ server.unifiedServer = function(req, res) {
 			'trimmedPath' : trimmedPath,
 			'queryStringObject' : queryStringObject,
 			'method' : method,
-			'header' : headers,
+			'headers' : headers,
 			'payload' : helpers.parseJsonToObject(buffer) 
 		};
 
@@ -103,7 +103,9 @@ server.unifiedServer = function(req, res) {
 server.router = {
 	'ping' : handlers.ping,
 	'user' : handlers.user,
-	'token' : handlers.token
+	'token' : handlers.token,
+	'cart' : handlers.cart,
+	'menu' : handlers.menu
 };
 
 // Init server
