@@ -32,6 +32,27 @@ helpers.hash = function(str){
     }
 };
 
+// Create a string of random alphanumeric character, of a given length
+helpers.createRandomString = function(strLength){
+    strLength = typeof(strLength) == 'number' && strLength > 0
+        ? strLength : false;
+    if (strLength) {
+        // Define all possible characters that could go into a string
+        var possibleCharacters = 'qwertyuiopasdfghjklzxcvbnm1234567890';
+
+        // start the final string
+        var str = '';
+        for (i = 1; i <= strLength; i++) {
+            var randomCharacter = possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
+            str += randomCharacter;
+        }
+        // return the final string
+        return str;
+    } else {
+        return false;
+    }
+};
+
 
 // Export helpers
 module.exports = helpers;

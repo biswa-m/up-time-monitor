@@ -102,7 +102,8 @@ server.unifiedServer = function(req, res) {
 // Router object
 server.router = {
 	'ping' : handlers.ping,
-	'users' : handlers.users
+	'user' : handlers.user,
+	'token' : handlers.token
 };
 
 // Init server
