@@ -53,6 +53,31 @@ helpers.createRandomString = function(strLength){
     }
 };
 
+// Validate cart items
+helpers.verifyCartItems = function(cartItems, menuData, callback){
+    var cartItemsAreValid = true;
+    var msg = {};
+
+    cartItems.forEach(function(item){
+        // Validate item
+        var productId = typeof(item.productId) == 'string' && item.productId.length > 0 ? item.productId : false;
+        var quantity = typeof(item.quantity) == 'number' && item.quantity > 0 ? item.quantity : false;
+
+        if (productId && quantity) {
+            // Match productId
+            if (!menuData[productId]) {
+                cartItemsAreValid = false;
+                msg = {'Error' : 'Product id doesnot exist'};
+            }
+        } else {
+            cartItemsAreValid = false;
+            msg = {'Error' : 'Missing valid productId or purchase quantity'};
+        }
+    });
+    callback(cartItemsAreValid, msg);
+};
+
+
 
 // Export helpers
 module.exports = helpers;

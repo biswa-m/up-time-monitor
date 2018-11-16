@@ -9,7 +9,7 @@ var fs = require('fs');
 var path = require('path');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
-var handlers = require('./handlers');
+var handlers = require('./handlers/handlers');
 var helpers = require('./helpers');
 var config = require('./config');
 
