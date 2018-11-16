@@ -94,7 +94,7 @@ handlers._users.post = function(data, callback){
 					};
 				
 					// Store the user
-					_data.create('users', email, userData, function(err){
+					_data.create('users', email, userData, false, function(err){
 						if (!err) {
 							callback(200);
 						} else {
@@ -309,7 +309,7 @@ handlers._tokens.post = function(data, callback){
 					};
 
 					// Write tokenObject to a new file
-					_data.create('tokens', tokenId, tokenObject, function(err){
+					_data.create('tokens', tokenId, tokenObject, false, function(err){
 						if (!err) {
 							callback(200, tokenObject);
 						} else {
@@ -461,7 +461,7 @@ handlers.menu = function(data, callback) {
 };
 
 
-// Container for shopping cart submethods
+// Container for menu submethods
 handlers._menu = {};
 
 /*
@@ -470,6 +470,7 @@ handlers._menu = {};
  * optional data: none
  */
 handlers._menu.get = function(data, callback){
+
 	// Validate required data
 	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
 	var email 
@@ -506,6 +507,198 @@ handlers._menu.get = function(data, callback){
 	}
 };
 
+
+// Handler for shopping cart
+handlers.cart = function(data, callback){
+	if (['get', 'post', 'delete'].indexOf(data.method) > -1){
+		handlers._cart[data.method](data, callback);
+	} else {
+		callback(405);
+	}
+};
+
+// Container for shooping cart submodels
+handlers._cart = {};
+
+/* Cart - post 
+ * required data: 
+	headers: email, token
+	payload: cartItems (instatnce of array containing productId, quantity)
+   optional data: none
+ */ 
+handlers._cart.post = function(data, callback){
+	// Validate required data
+	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
+	var email 
+		= typeof(data.headers.email) == 'string'
+		&& data.headers.email.length > 0
+		&& emailRegEx.test(data.headers.email)
+		? data.headers.email
+		: false;
+
+	var tokenId = 
+		typeof(data.headers.token) == 'string'
+		&& data.headers.token.length == 20
+		? data.headers.token
+		: false;
+
+	if (email && tokenId) {
+		// verify token
+		handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// vaidate cartItems
+				var cartItems = typeof(data.payload.cartItems) == 'object'
+					&& data.payload.cartItems instanceof Array
+					&& data.payload.cartItems.length > 0
+					? data.payload.cartItems
+					: false
+
+				if (cartItems) {
+					// Read the menu and save it to menuData
+					_data.read('menus', 'menu', function(err, menuData){
+						if (!err || menuData) {
+							handlers.verifyCartItems(cartItems, menuData, function(cartItemsAreValid, errMsg){
+								if (cartItemsAreValid) {
+									_data.create('carts', email, cartItems, true, function(err){
+										if (!err) {
+											callback(200);
+										} else {
+											callback(500, {'Error' : 'Could write to file'});
+										}
+									});
+								} else {
+									callback(400, errMsg);
+								}
+							});
+						} else {
+							callback(500, {'Error' : 'Could not read menu from file'});
+							return;
+						} 
+					});
+				} else {
+					callback(403, {'Error' : 'Missing required fields'});
+				}
+			} else {
+				callback(400, msg);
+			}
+		});
+	} else {
+		callback(403, {'Error' : 'Missing required field(s) in header'});
+	}
+};
+
+/* cart - get
+ * required data: 
+ *	headers: email, token
+ * optional data: none
+ */
+handlers._cart.get = function(data, callback){
+	// Validate required data
+	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
+	var email 
+		= typeof(data.queryStringObject.email) == 'string'
+		&& data.queryStringObject.email.trim().length > 0
+		&& emailRegEx.test(data.queryStringObject.email.trim())
+		? data.queryStringObject.email.trim()
+		: false;
+
+	var tokenId = 
+		typeof(data.headers.token) == 'string'
+		&& data.headers.token.length == 20
+		? data.headers.token
+		: false;
+
+	if (email && tokenId) {
+		// verify token
+		handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// Read cart
+				_data.read('carts', email, function(err, cartData){
+					if (!err && cartData) {
+						callback(200, cartData);
+					} else {
+						callback(500, {'Error' : 'Could not read cart from file'});
+					}
+				});
+			} else {
+				callback(400, msg);
+			}
+		});
+	} else {
+		callback(403, {'Error' : 'Missing required field(s) in header'});
+	}
+};
+
+/* cart - delete
+ * Required data : email(as payload)
+ * optional data : none
+ */
+handlers._cart.delete = function(data, callback){
+	// Validate required data
+	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
+	var email 
+		= typeof(data.payload.email) == 'string'
+		&& data.payload.email.length > 0
+		&& emailRegEx.test(data.payload.email)
+		? data.payload.email
+		: false;
+
+	var tokenId = 
+		typeof(data.headers.token) == 'string'
+		&& data.headers.token.length == 20
+		? data.headers.token
+		: false;
+
+	if (email && tokenId) {
+		// verify token
+		handlers._tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// Check the existance of the cart
+				_data.read('carts', email, function(err, cartData){
+					if (!err && cartData) {
+						_data.delete('carts', email, function(err){
+							if (!err) {
+								callback(200);
+							} else {
+								callback(500, {'Error' : 'Could not delete the cart'});
+							}
+						});
+					} else {
+						callback(400, {'Error' : 'There is no cart for the user'})
+					}
+				});
+			} else {
+				callback(400, msg);
+			}
+		});
+	} else {
+		callback(403, {'Error' : 'Missing required field(s)'});
+	}
+};
+
+// Validate cart items
+handlers.verifyCartItems = function(cartItems, menuData, callback){
+	var cartItemsAreValid = true;
+	var msg = {};
+
+	cartItems.forEach(function(item){
+		// Validate item
+		var productId = typeof(item.productId) == 'string' && item.productId.length > 0 ? item.productId : false;
+		var quantity = typeof(item.quantity) == 'number' && item.quantity > 0 ? item.quantity : false;
+
+		if (productId && quantity) {
+			// Match productId
+			if (!menuData[productId]) {
+				cartItemsAreValid = false;
+				msg = {'Error' : 'Product id doesnot exist'};
+			} 
+		} else {
+			cartItemsAreValid = false;
+			msg = {'Error' : 'Missing valid productId or purchase quantity'};
+		}
+	}); 
+	callback(cartItemsAreValid, msg);
+};
 
 // Exports model
 module.exports = handlers;

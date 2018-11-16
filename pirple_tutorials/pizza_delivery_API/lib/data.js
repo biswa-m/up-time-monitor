@@ -14,9 +14,13 @@ var lib = {};
 lib.baseDir = path.join(__dirname + '/../.data/');
 
 // Write data
-lib.create = function(dir, fileName, data, callback){
+lib.create = function(dir, fileName, data, replaceExisting, callback){
+	var flag = 'wx';
+	if (replaceExisting) {
+		flag = 'w';
+	} 
 	// Open the file for writing
-	fs.open(lib.baseDir + dir + '/' + fileName + '.json', 'wx', function(err, fileDescriptor){
+	fs.open(lib.baseDir + dir + '/' + fileName + '.json', flag, function(err, fileDescriptor){
 		if(!err && fileDescriptor) {
 			var stringData = JSON.stringify(data);
 
