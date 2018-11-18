@@ -5,6 +5,9 @@
 // Dependencies
 var crypto = require('crypto');
 var config = require('./config');
+var https = require('https');
+var querystring = require('querystring');
+var StringDecoder = require('string_decoder').StringDecoder;
 
 // Instantiate the helper module
 var helpers = {};
@@ -77,6 +80,99 @@ helpers.verifyCartItems = function(cartItems, menuData, callback){
     callback(cartItemsAreValid, msg);
 };
 
+// calculate total price of cart items based on menu
+helpers.calculateTotalPrice = function(cartData, menuData, callback){
+	var errMsg = false; 
+	var totalPrice = 0;
+
+	cartData.cartItems.forEach(function(item){
+        // Validate item
+        var productId = typeof(item.productId) == 'string' && item.productId.length > 0 ? item.productId : false;
+        var quantity = typeof(item.quantity) == 'number' && item.quantity > 0 ? item.quantity : false;
+
+		if (productId && quantity) {
+			if (menuData[productId]) {
+				if (typeof(menuData[productId].price) == 'number' && menuData[productId].price >= 0){
+					totalPrice += menuData[productId].price * quantity;		
+					console.log(productId, menuData[productId].price, quantity, totalPrice);
+				} else {
+					errMsg = {'Error' : 'Could not read valid price of an item'}
+				}
+			} else {
+				errMsg = {'Error' : 'Invalid productId'};
+			}
+        } else {
+            errMsg = {'Error' : 'Missing valid productId or purchase quantity'};
+        }
+	});
+    callback(errMsg, totalPrice);
+};
+
+// Accept payment using stripe.com
+helpers.receivePayment = function(orderId, payload, callback){
+	// Stringify the payload
+	var stringPayload = querystring.stringify(payload);
+	
+	console.log(stringPayload); // TODO Get rid of this
+
+	// Object for https request
+	var requestOptions = {
+		'protocol' : "https:",
+		'hostname' : "api.stripe.com",
+		'method' : 'POST',
+		'path' : "/v1/charges", 
+		'auth' : config.stripeApiKey +':',
+		'headers' : {
+			//"Authorization" : "Basic c2tfdGVzdF80ZUMzOUhxTHlqV0Rhcmp0VDF6ZHA3ZGM6",
+			"Content-Type" : "application/x-www-form-urlencoded",
+			"Content-Length" : Buffer.byteLength(stringPayload)
+		}
+	};
+
+	console.log(requestOptions);
+
+	// Instatntiate the request object
+	var req = https.request(requestOptions, function(res){
+		// Grab the status of the sent request
+		var status = res.statusCode;
+		if (status == 200 || status == 201) {
+			var buffer = ''; 
+			var decoder =  new StringDecoder('utf-8');
+
+			res.on('data', function(data){
+				buffer += decoder.write(data);
+			});
+
+			res.on('end', function(){
+				buffer += decoder.end();
+				var paymentData = helpers.parseJsonToObject(buffer);
+				if (paymentData.paid && paymentData.status === 'succeeded') {
+					callback(false, paymentData);
+				} else {
+					callback('Payment failled', paymentData);
+					console.log(paymentData.paid, paymentData.status);
+				}
+			});
+		
+		} else {
+			callback('Status code returned by api.stripe.com was: ' + status, {});
+		}
+	});
+
+	// Add the payload
+	req.write(stringPayload);
+
+	// Bind to the error event so it  does not get throw
+	req.on('error', function(e){
+		callback(e);
+		console.log(e);
+	});
+
+	// End the request
+	req.end();
+};
+
+// Send email via app.mailgun.com
 
 
 // Export helpers

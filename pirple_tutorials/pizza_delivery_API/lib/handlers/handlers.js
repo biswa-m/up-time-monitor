@@ -9,6 +9,7 @@ var _carts = require('./carts');
 var _tokens = require('./tokens');
 var _users = require('./users');
 var _menu = require('./menu');
+var _checkout = require('./checkout');
 
 // Instantiate the container
 var handlers = {};
@@ -58,6 +59,17 @@ handlers.cart = function(data, callback){
 		callback(405);
 	}
 };
+
+// Handler for placing order
+handlers.checkout = function(data, callback){
+	if (['post'].indexOf(data.method) > -1){
+		_checkout[data.method](data, callback);
+	} else {
+		callback(405);
+	}
+};
+
+
 
 // Exports model
 module.exports = handlers;

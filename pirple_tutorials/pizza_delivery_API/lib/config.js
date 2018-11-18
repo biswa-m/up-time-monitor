@@ -10,7 +10,9 @@ environments.staging = {
 	'httpport' : 3000,
 	'httpsport' : 3001,
 	'envName' : 'staging',
-	'hashingSecret': 'ThisIsASecretCode'
+	'hashingSecret': 'ThisIsASecretCode',
+	'stripeApiKey' : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc',
+	'emailGateway' : {'from' : 'Pizza shop <postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org>'}
 };
 
 // Production environments
@@ -18,7 +20,9 @@ environments.production = {
 	'httpport' : 5000,
 	'httpsport' : 5001,
 	'envName' : 'production',
-	'hashingSecret': 'ThisIsAnotherSecretCode'
+	'hashingSecret': 'ThisIsAnotherSecretCode',
+	'stripeApiKey' : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc',
+	'emailGateway' : {'from' : 'Pizza shop <postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org>'}
 };
 
 // Check command-line arguments for environment

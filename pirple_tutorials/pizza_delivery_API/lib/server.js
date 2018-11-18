@@ -105,7 +105,8 @@ server.router = {
 	'user' : handlers.user,
 	'token' : handlers.token,
 	'cart' : handlers.cart,
-	'menu' : handlers.menu
+	'menu' : handlers.menu,
+	'checkout' : handlers.checkout
 };
 
 // Init server

@@ -76,6 +76,14 @@ _users.post = function(data, callback){
 					_data.create('users', email, userData, false, function(err){
 						if (!err) {
 							callback(200);
+							
+							// Create empty cart for the user
+							_data.create('carts', email, {}, false, function(err){
+								if (err) {
+									console.log('Error creating new empty cart for ', email, ' : ', err);
+								}
+							});
+
 						} else {
 							callback(500, {'Error' :err});
 						}

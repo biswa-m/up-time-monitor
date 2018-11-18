@@ -49,7 +49,10 @@ _cart.post = function(data, callback){
 						if (!err || menuData) {
 							helpers.verifyCartItems(cartItems, menuData, function(cartItemsAreValid, errMsg){
 								if (cartItemsAreValid) {
-									_data.create('carts', email, cartItems, true, function(err){
+									// object to write on file
+									var cartData = {'cartItems' : cartItems};
+									
+									_data.create('carts', email, cartData, true, function(err){
 										if (!err) {
 											callback(200);
 										} else {
@@ -104,6 +107,8 @@ _cart.get = function(data, callback){
 			if (tokenIsValid) {
 				// Read cart
 				_data.read('carts', email, function(err, cartData){
+					// @TODO update cartData with price
+
 					if (!err && cartData) {
 						callback(200, cartData);
 					} else {
