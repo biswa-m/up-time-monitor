@@ -170,7 +170,6 @@ _tokens.delete = function(data, callback){
 		});
 	} else {
 		callback(403, {'Error' : 'Missing valid tokenId'});
-		console.log(data.payload.tokenId);
 	}
 };
 

@@ -1,8 +1,3 @@
-/* @TODO
-	6. send email notification
-	7. Delete cart
-*/
-
 /*
  * Handler for checkout process
  */
@@ -11,12 +6,15 @@
 var _data = require('../data');
 var helpers = require('../helpers');
 var config = require('../config');
+var _log = require('../logs');
+var util = require('util');
+var debug = util.debuglog('orders');
 
 
 // Container for the module
 var _checkOut = {};
 
-/* checkout - get
+/* checkout - POST 
  * Required data: email, token, payload.currency, payload.source
  * Optional data: none
  */
@@ -64,8 +62,21 @@ _checkOut.post = function(data, callback) {
 						};
 						// Receive payment via payment gateway
 						helpers.receivePayment(orderId, payload, function(err, paymentData){
+							// Data to write on log files
+							var logData = {};
+							logData[orderId] = {email, cartData, paymentData};
+
 							if (!err && paymentData) {
-								// Write order to file
+								// Create log file for received payments
+								_log.append('successfulTransactions', JSON.stringify(logData), function(err){
+									if (!err) {
+										debug('Log file appended for successful orderId: ', orderId);
+									} else {
+										debug('Could not append log file for orderId: ', orderId, err);
+									}
+								});
+
+								// create order file
 								_data.create('orders', orderId, {cartData, paymentData}, false,function(err){
 									if (!err) {
 										callback(200, paymentData);
@@ -73,16 +84,16 @@ _checkOut.post = function(data, callback) {
 										// Delete existing shopping cart
 										_data.delete('carts', email, function(err){
 											if (!err) {
-												console.log('Cart deleted for ' + email);
+												debug('Cart deleted for ' + email);
 											} else {
-												console.log('Failed to delete cart for ' + email);
+												debug('Failed to delete cart for ' + email);
 											}
 										});
 										
 										// Send email reciept
-										_checkOut.sendMail(email, cartData, paymentData, function(msg){
-											if (msg) {
-												console.log('Order Id: '+ orderId + '\t' + msg);
+										_checkOut.sendMail(email, cartData, paymentData, function(err){
+											if (err) {
+												debug('Order Id: '+ orderId + '\t' + err);
 											}
 										});
 
@@ -92,6 +103,14 @@ _checkOut.post = function(data, callback) {
 								});
 							} else {
 								callback(500, {'Error' : err, paymentData});
+								// Create log file for  payments
+								_log.append('failedTransaction', JSON.stringify(logData), function(err){
+									if (!err) {
+										debug('Log file appended for failed orderId: ', orderId);
+									} else {
+										debug('Could not append log file for orderId: ', orderId, err);
+									}
+								});
 							}
 						});
 					} else {

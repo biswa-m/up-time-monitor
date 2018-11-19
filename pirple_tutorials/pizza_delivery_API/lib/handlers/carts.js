@@ -107,8 +107,6 @@ _cart.get = function(data, callback){
 			if (tokenIsValid) {
 				// Read cart
 				_data.read('carts', email, function(err, cartData){
-					// @TODO update cartData with price
-
 					if (!err && cartData) {
 						callback(200, cartData);
 					} else {

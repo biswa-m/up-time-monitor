@@ -94,7 +94,6 @@ helpers.calculateTotalPrice = function(cartData, menuData, callback){
 			if (menuData[productId]) {
 				if (typeof(menuData[productId].price) == 'number' && menuData[productId].price >= 0){
 					totalPrice += menuData[productId].price * quantity;		
-					console.log(productId, menuData[productId].price, quantity, totalPrice);
 				} else {
 					errMsg = {'Error' : 'Could not read valid price of an item'}
 				}
@@ -127,8 +126,6 @@ helpers.receivePayment = function(orderId, payload, callback){
 		}
 	};
 
-	console.log(requestOptions);
-
 	// Instatntiate the request object
 	var req = https.request(requestOptions, function(res){
 		// Grab the status of the sent request
@@ -148,7 +145,6 @@ helpers.receivePayment = function(orderId, payload, callback){
 					callback(false, paymentData);
 				} else {
 					callback('Payment failled', paymentData);
-					console.log(paymentData.paid, paymentData.status);
 				}
 			});
 		
@@ -188,7 +184,6 @@ helpers.sendEmail = function(payload, callback){
 			"Content-Length" : Buffer.byteLength(stringPayload)
 		}
 	};
-	console.log(requestOptions, payload, stringPayload);
 
 	// Instatntiate the request object
 	var req = https.request(requestOptions, function(res){

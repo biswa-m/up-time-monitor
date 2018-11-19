@@ -12,6 +12,8 @@ var StringDecoder = require('string_decoder').StringDecoder;
 var handlers = require('./handlers/handlers');
 var helpers = require('./helpers');
 var config = require('./config');
+var util = require('util');
+var debug = util.debuglog('server'); 
 
 // Instantiate the server module object
 var server = {};
@@ -61,7 +63,7 @@ server.unifiedServer = function(req, res) {
 		buffer += decoder.end();
 
 		// Log the request data
-		console.log('Request received',
+		debug('Request received',
 			'\n\tpath: ', trimmedPath,
 			'\n\tmethod: ', method,
 			'\n\tquery string parameters: ',  queryStringObject,
@@ -93,8 +95,12 @@ server.unifiedServer = function(req, res) {
 			res.writeHead(statusCode);
 			res.end(JSON.stringify(payload));
 
-			// Log to console
-			console.log('returning response: ' + statusCode + '\t', payload);
+			// If the response is 200, print green otherwise print red
+            if (statusCode == 200) {
+                debug('\x1b[32m%s\x1b[0m', method.toUpperCase()+ '/' + trimmedPath + ' ' + statusCode);
+            } else {
+                debug('\x1b[31m%s\x1b[0m', method.toUpperCase()+ '/' + trimmedPath + ' ' + statusCode);
+            }
 		});
 	});
 };
@@ -113,12 +119,12 @@ server.router = {
 server.init = function(){
 	// Start http server
 	server.httpServer.listen(config.httpport, function(){
-		console.log('The server is listening port ', config.httpport, ' in mode: ', config.envName);
+		console.log('\x1b[35m%s\x1b[0m', 'The server is listening port '+ config.httpport + ' in mode: ' + config.envName);
 	});
 
 	// Start https server
 	server.httpsServer.listen(config.httpsport, function(){
-		console.log('The server is listening port ', config.httpsport, ' in mode: ', config.envName);
+		console.log('\x1b[36m%s\x1b[0m', 'The server is listening port '+ config.httpsport + ' in mode: ' + config.envName);
 	});
 };
 
