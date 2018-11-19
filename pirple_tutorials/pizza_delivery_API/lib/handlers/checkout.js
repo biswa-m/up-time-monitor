@@ -78,7 +78,14 @@ _checkOut.post = function(data, callback) {
 												console.log('Failed to delete cart for ' + email);
 											}
 										});
-									
+										
+										// Send email reciept
+										_checkOut.sendMail(email, cartData, paymentData, function(msg){
+											if (msg) {
+												console.log('Order Id: '+ orderId + '\t' + msg);
+											}
+										});
+
 									} else {
 										callback(501, {'Error' : 'Payment received, Failed to place the order'});
 									}
@@ -98,6 +105,36 @@ _checkOut.post = function(data, callback) {
 	} else {
 		callback(403, {'Error' : 'Missing required field(s)'});
 	}
+};
+
+_checkOut.sendMail = function(email, cartData, paymentData, callback) {
+	// Read user data to send email
+	_data.read('users', email, function(err, userData){
+		if (!err && userData) {
+			// Form email text 
+			var name = userData.firstName + ' ' + userData.lastName;
+			
+			var text = "Dear Mr. "+name+"\nWe have received payments of "+paymentData.currency+paymentData.amount
+			+" for your order , (order ID "+paymentData.description+"). \nThank You.";
+
+			// payload for mailgun email API
+			var emailData = {
+				'from' : config.emailGateway.from,
+				'to' : 'tunein2biswa@gmail.com',//email,
+				'subject' : 'Order Received',
+				'text' : text
+			};
+
+			// Call helper function for sending email
+			helpers.sendEmail(emailData, function(msg){
+					callback(msg);
+			});
+
+
+		} else {
+			callback('Could not read user for sending email');
+		}
+	});
 };
 
 _checkOut.totalCartAmount = function(email, callback){

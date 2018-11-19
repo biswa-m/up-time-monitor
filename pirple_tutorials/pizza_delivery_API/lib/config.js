@@ -12,7 +12,9 @@ environments.staging = {
 	'envName' : 'staging',
 	'hashingSecret': 'ThisIsASecretCode',
 	'stripeApiKey' : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc',
-	'emailGateway' : {'from' : 'Pizza shop <postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org>'}
+	'emailGateway' : {'from' : 'postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org',
+					  'path' : '/v3/sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org/messages',
+					  'auth' : 'api:48a4641198ca9445a632ab33939eddf3-9525e19d-abb2566b'}
 };
 
 // Production environments
@@ -22,7 +24,9 @@ environments.production = {
 	'envName' : 'production',
 	'hashingSecret': 'ThisIsAnotherSecretCode',
 	'stripeApiKey' : 'sk_test_4eC39HqLyjWDarjtT1zdp7dc',
-	'emailGateway' : {'from' : 'Pizza shop <postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org>'}
+	'emailGateway' : {'from' : 'Pizza shop <postmaster@sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org>',
+					  'path' : '/v3/sandbox8074d9f0387148cf96433bfc622ff9b7.mailgun.org/messages',
+					  'auth' : 'api:48a4641198ca9445a632ab33939eddf3-9525e19d-abb2566b'}
 };
 
 // Check command-line arguments for environment

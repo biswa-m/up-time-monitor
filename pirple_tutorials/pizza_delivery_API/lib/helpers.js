@@ -112,8 +112,6 @@ helpers.calculateTotalPrice = function(cartData, menuData, callback){
 helpers.receivePayment = function(orderId, payload, callback){
 	// Stringify the payload
 	var stringPayload = querystring.stringify(payload);
-	
-	console.log(stringPayload); // TODO Get rid of this
 
 	// Object for https request
 	var requestOptions = {
@@ -172,7 +170,61 @@ helpers.receivePayment = function(orderId, payload, callback){
 	req.end();
 };
 
-// Send email via app.mailgun.com
+// Send email via api.mailgun.com
+helpers.sendEmail = function(payload, callback){
+	// Stringify the payload
+	var stringPayload = querystring.stringify(payload);
+
+	// Object for https request
+	var requestOptions = {
+		'protocol' : "https:",
+		'hostname' : "api.mailgun.net",
+		'method' : 'POST',
+		'path' : config.emailGateway.path, 
+		'auth' : config.emailGateway.auth,
+		'payload' : stringPayload,
+		'headers' : {
+			"Content-Type" : "application/x-www-form-urlencoded",
+			"Content-Length" : Buffer.byteLength(stringPayload)
+		}
+	};
+	console.log(requestOptions, payload, stringPayload);
+
+	// Instatntiate the request object
+	var req = https.request(requestOptions, function(res){
+		// Grab the status of the sent request
+		var status = res.statusCode;
+		if (status == 200 || status == 201) {
+			var buffer = ''; 
+			var decoder =  new StringDecoder('utf-8');
+
+			res.on('data', function(data){
+				buffer += decoder.write(data);
+			});
+
+			res.on('end', function(){
+				buffer += decoder.end();
+				callback(buffer);
+			});
+		
+		} else {
+			callback('Status code returned by email gateway was: ' + status);
+		}
+	});
+
+	// Add the payload
+	req.write(stringPayload);
+
+	// Bind to the error event so it  does not get throw
+	req.on('error', function(e){
+		callback(e);
+		console.log(e);
+	});
+
+	// End the request
+	req.end();
+};
+
 
 
 // Export helpers
