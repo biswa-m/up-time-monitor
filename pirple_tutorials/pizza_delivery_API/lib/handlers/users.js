@@ -76,14 +76,6 @@ _users.post = function(data, callback){
 					_data.create('users', email, userData, false, function(err){
 						if (!err) {
 							callback(200);
-							
-							// Create empty cart for the user
-							_data.create('carts', email, {}, false, function(err){
-								if (err) {
-									console.log('Error creating new empty cart for ', email, ' : ', err);
-								}
-							});
-
 						} else {
 							callback(500, {'Error' :err});
 						}
@@ -192,7 +184,6 @@ _users.put = function(data, callback){
 				&& data.headers.token.length == 20
 				? data.headers.token
 				: false;
-			console.log(tokenId);
 
 			// Verify tokenId is belongs to the user and is not expired
 			_tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
@@ -238,10 +229,68 @@ _users.put = function(data, callback){
 	}
 };
 
-// User - DELETE
+/* User - DELETE 
+ * Required data: email
+ * Otional data: none
+ */
 _users.delete = function(data, callback){
-	// @TODO delete user file and all the associate data
-	callback(200, {'Success' : 'Hi from handlers function'});
+	// Validate data required data
+	var emailRegEx = /^[^\.\s]?(".*)?[^\s@]+(.*")?[^\.]?@[^-][^\s@]+\.[^\s@]/g;
+	var email 
+		= typeof(data.payload.email) == 'string'
+		&& data.payload.email.length > 0
+		&& emailRegEx.test(data.payload.email)
+		? data.payload.email
+		: false;
+
+	if (email){
+		// Validate token id
+		var tokenId = 
+			typeof(data.headers.token) == 'string'
+			&& data.headers.token.length == 20
+			? data.headers.token
+			: false;
+
+		// Verify tokenId is belongs to the user and is not expired
+		_tokens.verifyToken(tokenId, email, function(tokenIsValid, msg){
+			if (tokenIsValid) {
+				// Look up the user
+				_data.read('users', email, function(err, userData){
+					if (!err && userData) {
+						// Store the new update
+						_data.delete('users', email, function(err){
+							if (!err) {
+								// Check if the user has a cart
+								_data.read('carts', email, function(err){
+									if (!err) {
+										// Delete user cart
+										_data.delete('carts', email, function(err){
+											if (!err) {
+												callback(200);
+											} else {
+												callback(500, {'Error' : 'The user\'s cart could not be deleted'});
+											}
+										});
+									} else {
+										callback(200);
+									}
+								});
+
+							} else {
+								callback(500, {'Error' : 'Could not update the user'});	
+							}
+						});
+					} else {
+						callback(400, {'Error' : 'The specified user does not exist'});
+					}
+				});	
+			} else {
+				callback(400, msg);
+			}
+		});
+	} else {
+		callback(403, {'Error' : 'Missing valid email address'});
+	}
 };
 
 // Exports model
