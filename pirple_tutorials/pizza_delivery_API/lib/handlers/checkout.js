@@ -70,9 +70,9 @@ _checkOut.post = function(data, callback) {
 								// Create log file for received payments
 								_log.append('successfulTransactions', JSON.stringify(logData), function(err){
 									if (!err) {
-										debug('Log file appended for successful orderId: ', orderId);
+										debug('Payment received, log file appended. OrderId: ', orderId);
 									} else {
-										debug('Could not append log file for orderId: ', orderId, err);
+										debug('Payment received, could not append log file. OrderId: ', orderId, err);
 									}
 								});
 
