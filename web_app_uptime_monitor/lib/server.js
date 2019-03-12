@@ -97,6 +97,10 @@ server.unifiedServer = function(req, res){
 			// Determine the type of response (fallback to JSON)
 			contentType = typeof(contentType) == 'string' ? contentType : 'json';
 
+			// Return response parts that are common to all content-types
+			res.writeHead(statusCode);
+			res.end(payloadString);
+
 			// Return response parts that are content specific
 			var payloadString = '';
 			if (contentType == 'html') {
@@ -106,12 +110,7 @@ server.unifiedServer = function(req, res){
 				res.setHeader('Content-Type', 'application/json');
 				payload = typeof(payload) == 'object' ? payload : {};
 				payloadString = JSON.stringify(payload);
-			
 			}
-
-			// Return response parts that are common to all content-types
-			res.writeHead(statusCode);
-			res.end(payloadString);
 
 			// If the response is 200, print green otherwise print red 
 			if (statusCode == 200) {

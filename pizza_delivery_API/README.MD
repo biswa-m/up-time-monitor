@@ -1,15 +1,10 @@
-# Pirple Assignment #2
-API for a pizza delivery company.
+# API for pizza delivery.
+
 ## Starting the API
 To start the API simply type following command.
 
     node index.js
 
-On this command a http and a https server will run in staging environment and start listening to port 3000 and 3001 respectively. 
-This can be tested by following URI
-    
-    localhost:3000/ping
-    https://localhost:3001/ping
 ### Starting in different Modes and environments
 Start the API in stagging environment 
     
