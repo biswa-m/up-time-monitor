@@ -71,11 +71,21 @@ server.unifiedServer = function(req, res){
 			);
 
 		// Chose the handler this request should go
-		var chosenHandler = 
-			typeof(server.router[trimmedPath]) !== 'undefined'
-				? server.router[trimmedPath]
-				: handlers.notFound;
+		
+		// default handler
+		var chosenHandler = handlers.notFound;
 
+		// Match requested path with defined router
+		Object.keys(server.router).some(x => {
+			routerRegEx = new RegExp('^'+x+'(\/.*)?$');
+			if (trimmedPath.match(routerRegEx)) {
+				chosenHandler = server.router[x];
+				
+				// stop the some function after the first match
+				return true;
+			}
+		});
+		
 		// Construct data object to send to handler
 		var data = {
 			'trimmedPath' : trimmedPath,
@@ -99,10 +109,25 @@ server.unifiedServer = function(req, res){
 			if (contentType == 'html') {
 				res.setHeader('Content-Type', 'text/html');
 				payloadString = typeof(payload) == 'string' ? payload : '';
-			} else {
+			} else if (contentType == 'json') {
 				res.setHeader('Content-Type', 'application/json');
-				payload = typeof(payload) == 'object' ? payload : {};
+				payload = typeof(payload) == 'object' ? payload : '';
 				payloadString = JSON.stringify(payload);
+			} else if (contentType == 'favicon') {
+				res.setHeader('Content-Type', 'image/x-icon');
+				payloadString = typeof(payload) != undefined ? payload : '';
+			} else if (contentType == 'css') {
+				res.setHeader('Content-Type', 'text/css');
+				payloadString = typeof(payload) != undefined ? payload : '';
+			} else if (contentType == 'png') {
+				res.setHeader('Content-Type', 'image/png');
+				payloadString = typeof(payload) != undefined ? payload : '';
+			} else if (contentType == 'jpg') {
+				res.setHeader('Content-Type', 'image/jpeg');
+				payloadString = typeof(payload) != undefined ? payload : '';
+			} else {
+				res.setHeader('Content-Type', 'text/plain');
+				payloadString = typeof(payload) != undefined ? payload : '';
 			}
 
 			// Return response parts that are common to all content-types
@@ -133,7 +158,9 @@ server.router = {
 	'ping' : handlers.ping,
 	'api/users' : handlers.users,
 	'api/tokens' : handlers.tokens,
-	'api/checks' : handlers.checks
+	'api/checks' : handlers.checks,
+	'favicon.ico' : handlers.favicon,
+	'public' : handlers.public 
 };
 
 // Init server

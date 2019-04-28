@@ -45,6 +45,64 @@ handlers.index = function(data, callback){
 	} 
 };
 
+// Favicon
+handlers.favicon = function(data, callback) {
+	// Reject any method that isn't a get
+	if (data.method == 'get') {
+		// Read in the favicon's data
+		helpers.getStaticAsset('favicon.ico', function(err, data) {
+			if (!err && data) {
+				// Callback the data
+				callback(200, data, 'favicon');
+			} else {
+				callback(500);
+			}
+		});
+	} else {
+		callback(405);
+	}
+};
+
+// Public assets
+handlers.public = function(data, callback) {
+	// Reject any method that isn't a get
+	if (data.method == 'get') {
+		// Get the filename being requested
+		var trimedAssetName = data.trimmedPath.replace('public/', '').trim();
+		if (trimedAssetName.length > 0) {
+			// Read in the asset's data
+			helpers.getStaticAsset(trimedAssetName, function(err, data) {
+				if (!err && data) {
+					// Determine the content type (default plain text)
+					var contentType = 'plain';
+
+					if (trimedAssetName.indexOf('.css') > -1) {
+						contentType = 'css';
+					}
+					if (trimedAssetName.indexOf('.png') > -1) {
+						contentType = 'png';
+					}
+					if (trimedAssetName.indexOf('.jpg') > -1) {
+						contentType = 'jpg';
+					}
+					if (trimedAssetName.indexOf('.ico') > -1) {
+						contentType = 'favicon';
+					}
+
+					// callback the data
+					callback(200, data, contentType);
+				} else {
+					callback(404);
+				}
+			})
+		} else {
+			callback(404);
+		}
+	} else {
+		callback(405);
+	}
+};
+
 
 /*
  * JSON API Handlers
