@@ -155,7 +155,7 @@ helpers.addUniversalTemplates = function(str, data, callback){
 			helpers.getTemplate('footer', data, function(err, footerString){
 				if (!err && footerString) {
 					// Add them all together
-					var fullString == headerString+str+footerString;
+					var fullString = headerString+str+footerString;
 					callback(false, fullString);
 				} else {
 					callback('Could not find the footer template');
@@ -176,7 +176,7 @@ helpers.interpolate = function(str, data) {
 	// Add the templateGlobals to the data object, prepending their key name to the global
 	for (var keyName in config.templateGlobals) {
 		if (config.templateGlobals.hasOwnProperty(keyName)) {
-			data['global.'+keyName] = config.tempalteGlobals[keyName];
+			data['global.'+keyName] = config.templateGlobals[keyName];
 		}
 	}
 

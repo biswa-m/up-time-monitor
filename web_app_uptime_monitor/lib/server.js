@@ -23,7 +23,6 @@ server.httpServer = http.createServer(function(req, res){
 	server.unifiedServer(req, res);
 });
 
-
 // Instantiate the HTTPS server
 server.httpsServerOptions = {
 	'key' : fs.readFileSync(path.join(__dirname, '/../https/key.pem')), 
@@ -33,8 +32,6 @@ server.httpsServerOptions = {
 server.httpsServer = https.createServer(server.httpsServerOptions, function(req, res){
 	server.unifiedServer(req, res);
 });
-
-
 
 // All the server logic for both the http and https server
 server.unifiedServer = function(req, res){
@@ -97,10 +94,6 @@ server.unifiedServer = function(req, res){
 			// Determine the type of response (fallback to JSON)
 			contentType = typeof(contentType) == 'string' ? contentType : 'json';
 
-			// Return response parts that are common to all content-types
-			res.writeHead(statusCode);
-			res.end(payloadString);
-
 			// Return response parts that are content specific
 			var payloadString = '';
 			if (contentType == 'html') {
@@ -111,6 +104,10 @@ server.unifiedServer = function(req, res){
 				payload = typeof(payload) == 'object' ? payload : {};
 				payloadString = JSON.stringify(payload);
 			}
+
+			// Return response parts that are common to all content-types
+			res.writeHead(statusCode);
+			res.end(payloadString);
 
 			// If the response is 200, print green otherwise print red 
 			if (statusCode == 200) {
