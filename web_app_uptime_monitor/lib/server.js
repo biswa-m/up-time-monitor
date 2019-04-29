@@ -79,8 +79,7 @@ server.unifiedServer = function(req, res){
 		Object.keys(server.router).some(x => {
 			routerRegEx = new RegExp('^'+x+'(\/.*)?$');
 			if (trimmedPath.match(routerRegEx)) {
-				chosenHandler = server.router[x];
-				
+				chosenHandler = typeof(server.router[x]) !== 'undefined' ? server.router[x] : handlers.notFound;
 				// stop the some function after the first match
 				return true;
 			}
