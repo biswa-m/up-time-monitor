@@ -53,7 +53,7 @@ cli.responders.help = function() {
 	console.log('You asked for help');
 }
 cli.responders.exit = function() {
-	console.log('You asked for exit');
+	process.exit(0);
 }
 cli.responders.stats = function() {
 	console.log('You asked for stats');
