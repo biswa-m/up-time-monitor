@@ -59,7 +59,7 @@ cli.responders.help = function() {
 		'stats': 'Get statisics of the underlying operations and resourse utilisation',
 		'list users': 'Show a list of all the registered (undeleted) user in the system',
 		'more user info --{userId}': 'Show details of a specific user',
-		'list checks --up --down': 'Show a list of all the active checks in the system, including their satate, The "--up" and the "--down" flags are both optional',
+		'list checks --up --down': 'Show a list of all the active checks in the system, including their state, The "--up" and the "--down" flags are both optional',
 		'more check info --{checkId}': 'Show details of a specified checks',
 		'list logs': 'Show a list of all logs file available to be read (compressed and uncompressed)',
 		'more log info --{fileName}': 'Show details of a specified log file' 
@@ -212,7 +212,31 @@ cli.responders.moreUserInfo = function(str) {
 	}
 }
 cli.responders.listChecks = function(str) {
-	console.log('You asked for list checks ', str);
+	_data.list('checks', function(err, checkIds) {
+		if (!err && checkIds && checkIds.length > 0) {
+			cli.verticalSpace();
+			checkIds.forEach(function(checkId) {
+				_data.read('checks', checkId, function(err, checkData) {
+					if (!err && checkData) {
+						var includeCheck = false;
+						var lowerString = str.toLowerCase();
+
+						// Get the state, default to down
+						var state = typeof(checkData.state) == 'string' ? checkData.state : 'down';
+						// Get the state, default to unknown
+						var stateOrUnknown = typeof(checkData.state) == 'string' ? checkData.state : 'unknown';
+
+						// If the user has specified the state, or hasn't specify any state include current check accordingly
+						if (lowerString.indexOf('--'+state) > -1 || (lowerString.indexOf('--down') == -1 && lowerString.indexOf('--up') == -1)) {
+							var line = 'ID: '+checkData.id+' '+checkData.method.toUpperCase()+' '+checkData.protocol+'	://'+checkData.url+' State: '+stateOrUnknown;
+							console.log(line);
+							cli.verticalSpace();
+						}
+					}
+				});
+			});
+		}
+	});
 }
 cli.responders.moreCheckInfo = function(str) {
 	console.log('You asked for more check  info', str);
