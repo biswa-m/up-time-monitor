@@ -192,7 +192,24 @@ cli.responders.listUsers = function() {
 	});
 }
 cli.responders.moreUserInfo = function(str) {
-	console.log('You asked for more user info ', str);
+	// Get the ID from the string
+	var arr = str.split('--');
+
+	var userId = typeof(arr[1]) == 'string' && arr[1].trim().length	> 0 ? arr[1].trim() : false;
+	if (userId) {
+		// Lookup the user
+		_data.read('users', userId, function(err, userData) {
+			if (!err && userData) {
+				// Remove the hashed password
+				delete userData.hashedPassword;
+
+				// Print the JSON with text highlighting
+				cli.verticalSpace();
+				console.dir(userData, {'colers': true});
+				cli.verticalSpace();
+			}
+		});
+	}
 }
 cli.responders.listChecks = function(str) {
 	console.log('You asked for list checks ', str);
