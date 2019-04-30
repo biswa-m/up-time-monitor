@@ -11,7 +11,7 @@ class _events extends events{};
 var e = new _events();
 var os = require('os');
 var v8 = require('v8');
-
+var _data = require('./data');
 // Instantiate the CLI module object
 var cli = {};
 
@@ -170,7 +170,26 @@ cli.responders.stats = function() {
 	cli.horizontalLine();
 }
 cli.responders.listUsers = function() {
-	console.log('You asked for list users');
+	_data.list('users', function(err, userIds) {
+		if (!err && userIds && userIds.length > 0) {
+			cli.verticalSpace();
+			userIds.forEach(function(userId) {
+				_data.read('users', userId, function(err, userData) {
+					if (!err && userData) {
+						var line = 'Name: '+userData.firstName +' '+userData.lastName+' Phone: '+userData.phone+' Checks: ';
+						var numberOfChecks = typeof(userData.checks) == 'object'
+							&& userData.checks instanceof Array
+							&& userData.checks.length > 0
+							? userData.checks.length
+							: 0;
+						line += numberOfChecks;
+						console.log(line);
+						cli.verticalSpace();
+					}
+				});
+			});
+		}
+	});
 }
 cli.responders.moreUserInfo = function(str) {
 	console.log('You asked for more user info ', str);
