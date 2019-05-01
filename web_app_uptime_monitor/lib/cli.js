@@ -13,6 +13,8 @@ var os = require('os');
 var v8 = require('v8');
 var _data = require('./data');
 var _logs = require('./logs');
+var helpers = require('./helpers');
+
 // Instantiate the CLI module object
 var cli = {};
 
@@ -270,7 +272,26 @@ cli.responders.listLogs = function() {
 	});
 }
 cli.responders.moreLogInfo = function(str) {
-	console.log('You asked for more log info ', str);
+	// Get the logFIleName from the string
+	var arr = str.split('--');
+	var logFileName = typeof(arr[1]) == 'string' && arr[1].trim().length	> 0 ? arr[1].trim() : false;
+	if (logFileName) {
+		cli.verticalSpace();
+		// Decompress the log
+		_logs.decompress(logFileName, function(err, strData) {
+			if (!err && strData) {
+				//  Split into lines
+				var arr = strData.split('\n');
+				arr.forEach(function(jsonString) {
+					var logObject = helpers.parseJsonToObject(jsonString)
+					if (logObject && JSON.stringify(logObject) !== '{}') {
+						console.dir(logObject, {'colors': true});
+						cli.verticalSpace();
+					}
+				});
+			}
+		});
+	}
 }
 
 // Input processor
