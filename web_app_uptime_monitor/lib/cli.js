@@ -231,7 +231,7 @@ cli.responders.listChecks = function(str) {
 
 						// If the user has specified the state, or hasn't specify any state include current check accordingly
 						if (lowerString.indexOf('--'+state) > -1 || (lowerString.indexOf('--down') == -1 && lowerString.indexOf('--up') == -1)) {
-							var line = 'ID: '+checkData.id+' '+checkData.method.toUpperCase()+' '+checkData.protocol+'	://'+checkData.url+' State: '+stateOrUnknown;
+							var line = 'ID: '+checkData.id+' '+checkData.method.toUpperCase()+' '+checkData.protocol+'://'+checkData.url+' State: '+stateOrUnknown;
 							console.log(line);
 							cli.verticalSpace();
 						}

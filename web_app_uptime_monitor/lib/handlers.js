@@ -6,6 +6,8 @@
 var _data = require('./data');
 var helpers = require('./helpers');
 var config = require('./config');
+var _url = require('url');
+var dns = require('dns');
 
 // Define the handlers
 var handlers = {};
@@ -860,41 +862,52 @@ handlers._checks.post = function(data, callback){
 							: [];
 						// Verify there are less than maximum no of checks
 						if (userChecks.length < config.maxChecks) {
-							// Create a random id for the check
-							var checkId = helpers.createRandomString(20);
+							// Verify that the URL given has DNS entries
+							var parsedUrl = _url.parse(protocol+'://'+url, true);
+							var hostName = typeof(parsedUrl.hostname) == 'string' && parsedUrl.hostname.length > 0 ? parsedUrl.hostname : false;
+							if (!hostName) return callback(400, {'Error': 'Missing valid required field'});
 							
-							// Create the check object, 
-							// and include the user's phone 
-							var checkObject = {
-								'id' : checkId,
-								'userPhone' : userPhone,
-								'protocol' : protocol,
-								'url' : url,
-								'method' : method,
-								'successCodes' : successCodes,
-								'timeoutSeconds' : timeoutSeconds
-							};
+							dns.resolve(hostName, function(err, records) {
+								if (!err && records) {
+									// Create a random id for the check
+									var checkId = helpers.createRandomString(20);
+									
+									// Create the check object, 
+									// and include the user's phone 
+									var checkObject = {
+										'id' : checkId,
+										'userPhone' : userPhone,
+										'protocol' : protocol,
+										'url' : url,
+										'method' : method,
+										'successCodes' : successCodes,
+										'timeoutSeconds' : timeoutSeconds
+									};
 
-							// Save the object
-							_data.create('checks', checkId, checkObject, function(err){
-								if (!err) {
-									// Add the check id to userObject
-									userData.checks = userChecks;
-									userData.checks.push(checkId);
-
-									// Save the new user data
-									_data.update('users', userPhone, userData, function(err) {
+									// Save the object
+									_data.create('checks', checkId, checkObject, function(err){
 										if (!err) {
-											// Return the data about chekObject
-											callback(200, checkObject);
+											// Add the check id to userObject
+											userData.checks = userChecks;
+											userData.checks.push(checkId);
+
+											// Save the new user data
+											_data.update('users', userPhone, userData, function(err) {
+												if (!err) {
+													// Return the data about chekObject
+													callback(200, checkObject);
+												} else {
+													callback(500, {'Error' : 'Could not update the user with new checks'});
+												}		
+											});
 										} else {
-											callback(500, {'Error' : 'Could not update the user with new checks'});
-										}		
+											callback(500, {'Error' : 'Could not create the new check'});
+										}
 									});
 								} else {
-									callback(500, {'Error' : 'Could not create the new check'});
-									}
-									});
+									callback(400, {'Error': 'The hostname of the URL did not resolve andy DNS entries'});
+								}
+							});
 						} else {
 							callback(400, {'Error' : 'The user already has'
 							+' the maximum number of checks ('
