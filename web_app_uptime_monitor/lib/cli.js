@@ -216,7 +216,7 @@ cli.responders.listChecks = function(str) {
 		if (!err && checkIds && checkIds.length > 0) {
 			cli.verticalSpace();
 			checkIds.forEach(function(checkId) {
-				_data.read('checks', checkId, function(err, checkData) {
+				_data.read('checks', checkId, function(err, checkData) {	
 					if (!err && checkData) {
 						var includeCheck = false;
 						var lowerString = str.toLowerCase();
@@ -239,7 +239,22 @@ cli.responders.listChecks = function(str) {
 	});
 }
 cli.responders.moreCheckInfo = function(str) {
-	console.log('You asked for more check  info', str);
+	// Get the ID from the string
+	var arr = str.split('--');
+
+	var checkId = typeof(arr[1]) == 'string' && arr[1].trim().length	> 0 ? arr[1].trim() : false;
+	if (checkId) {
+		// Lookup the user
+		_data.read('checks', checkId, function(err, checkData) {
+			if (!err && checkData) {
+
+				// Print the JSON with text highlighting
+				cli.verticalSpace();
+				console.dir(checkData, {'colers': true});
+				cli.verticalSpace();
+			}
+		});
+	}
 }
 cli.responders.listLogs = function() {
 	console.log('You asked for list logs');
