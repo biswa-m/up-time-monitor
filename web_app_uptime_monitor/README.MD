@@ -48,12 +48,15 @@ Run the app in debugging modes
 	NODE_DEBUG=server node index.js
 
 # CLI Commands for admin
-1.	Exit
-2.	Man/Help
-3.	Stats
-4.	List Users
-5.	More User Info
-6.	List Checks
-7.	More Check Info
-8.	List Logs
-9.	More Log Info
+| Command | Description
+| - | -
+| exit | Kill the CLI (and rest of the application)
+| man |   Show this help page
+| help | Alias of the "man" command
+| stats | Get statisics of the underlying operations and resourse utilisation
+| list users | Show a list of all the registered (undeleted) user in the system
+| more user info --{userId} | Show details of a specific user
+| list checks --up --down | Show a list of all the active checks in the system, including their state, The "--up" and the "--down" flags are both optional
+| more check info --{checkId} | Show details of a specified checks
+| list logs | Show a list of all logs file available to be read (compressed only)
+| more log info --{fileName} | Show details of a specified log file
