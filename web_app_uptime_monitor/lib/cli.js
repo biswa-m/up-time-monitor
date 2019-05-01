@@ -81,7 +81,7 @@ cli.responders.help = function() {
 			var line = '\x1b[33m'+key+'\x1b[0m';
 			var padding = 60 - line.length;
 
-			for (i = 0; i < padding; ++i) {
+			for(var i = 0; i < padding; ++i) {
 				line += ' ';
 			}
 			line += value;
@@ -97,7 +97,7 @@ cli.responders.help = function() {
 // Create a vertical space
 cli.verticalSpace = function(lines) {
 	lines = typeof(lines) == 'number' && lines > 0 ? lines : 1;
-	for (i = 0; i < lines; ++i) {
+	for(var i = 0; i < lines; ++i) {
 		console.log('');
 	}
 };
@@ -108,7 +108,7 @@ cli.horizontalLine = function(){
 	var width = process.stdout.columns;
 
 	var line = '';
-	for (i = 0; i < width; ++i) {
+	for(var i = 0; i < width; ++i) {
 		line += '-';
 	}
 	console.log(line);
@@ -126,7 +126,7 @@ cli.centered = function(str) {
 
 	// Put in left padded spaces before the string itself
 	var line = '';
-	for (i = 0; i < leftPadding; ++i) {
+	for(var i = 0; i < leftPadding; ++i) {
 		line += ' ';
 	};
 	line += str;
@@ -161,7 +161,7 @@ cli.responders.stats = function() {
 			var value = stats[key];
 			var line = '\x1b[33m'+key+'\x1b[0m';
 			var padding = 60 - line.length;
-			for (i = 0; i < padding; ++i) {
+			for(var i = 0; i < padding; ++i) {
 				line += ' ';
 			}
 			line += value;
